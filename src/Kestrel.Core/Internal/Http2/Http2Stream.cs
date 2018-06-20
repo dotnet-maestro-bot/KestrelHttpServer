@@ -3,13 +3,12 @@
 
 using System;
 using System.Buffers;
+using System.IO;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Server.Kestrel.Core.Features;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
 namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
@@ -23,7 +22,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
         {
             _context = context;
 
-            Output = new Http2OutputProducer(StreamId, _context.FrameWriter);
+            Output = new Http2OutputProducer(StreamId, _context.FrameWriter, _context.ServiceContext.Log);
         }
 
         public int StreamId => _context.StreamId;
@@ -143,15 +142,12 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
             }
         }
 
-        // TODO: The HTTP/2 tests expect the request and response streams to be aborted with
-        // non-ConnectionAbortedExceptions. The abortReasons can include things like
-        // Http2ConnectionErrorException which don't derive from IOException or
-        // OperationCanceledException. This is probably not a good idea.
-        public void Http2Abort(Exception abortReason)
+        public override void Abort(ConnectionAbortedException abortReason)
         {
-            _streams?.Abort(abortReason);
+            base.Abort(abortReason);
 
-            OnInputOrOutputCompleted();
+            // Unblock the request body.
+            RequestBodyPipe.Writer.Complete(new IOException("The request stream was aborted.", abortReason));
         }
     }
 }
