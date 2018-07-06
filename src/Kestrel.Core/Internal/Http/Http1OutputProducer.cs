@@ -64,6 +64,8 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
             _transportBytesWrittenFeature = transportBytesWrittenFeature;
         }
 
+        public bool IsCompleted => _completed;
+
         public Task WriteDataAsync(ReadOnlySpan<byte> buffer, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (cancellationToken.IsCancellationRequested)

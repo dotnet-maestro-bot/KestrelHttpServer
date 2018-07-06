@@ -18,6 +18,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
         private readonly IHttp2FrameWriter _frameWriter;
         private readonly IKestrelTrace _kestrelTrace;
         private int _requestAborted;
+        private bool _completed;
 
         public Http2OutputProducer(int streamId, IHttp2FrameWriter frameWriter, IKestrelTrace kestrelTrace)
         {
@@ -27,6 +28,8 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
         }
 
         private bool RequestAborted => _requestAborted == 1;
+
+        public bool IsCompleted => _completed || RequestAborted;
 
         public void Dispose()
         {
@@ -84,6 +87,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
                 // TODO: Log Trace - Response suffix suppressed for aborted stream.
                 return Task.CompletedTask;
             }
+            _completed = true;
             return _frameWriter.WriteDataAsync(_streamId, Constants.EmptyData, endStream: true, cancellationToken: cancellationToken);
         }
 

@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
@@ -16,6 +17,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
     public partial class Http2Stream : HttpProtocol
     {
         private readonly Http2StreamContext _context;
+        private int _requestAborted;
 
         public Http2Stream(Http2StreamContext context)
             : base(context)
@@ -144,10 +146,38 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
 
         public override void Abort(ConnectionAbortedException abortReason)
         {
+            if (Interlocked.Exchange(ref _requestAborted, 1) != 0)
+            {
+                return;
+            }
+
+            base.Abort(abortReason);
+
+            // Unblock the request body.
+            RequestBodyPipe.Writer.Complete(new IOException($"The request stream was terminated.", abortReason));
+        }
+
+        protected override void ApplicationAbort()
+        {
+            if (Interlocked.Exchange(ref _requestAborted, 1) != 0)
+            {
+                return;
+            }
+
+            var outputCompleted = Output.IsCompleted;
+
+            var abortReason = new ConnectionAbortedException($"The request stream was reset by the application.");
             base.Abort(abortReason);
 
             // Unblock the request body.
             RequestBodyPipe.Writer.Complete(new IOException("The request stream was aborted.", abortReason));
+
+            // If this was an app initiated Abort then we need to inform the client.
+            // Only reset if the connection is open or in a half closed state.
+            if (!EndStreamReceived || !outputCompleted)
+            {
+                _context.FrameWriter.WriteRstStreamAsync(StreamId, Http2ErrorCode.CANCEL).GetAwaiter().GetResult();
+            }
         }
     }
 }

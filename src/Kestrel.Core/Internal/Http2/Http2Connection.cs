@@ -505,7 +505,8 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
 
             if (_streams.TryGetValue(_incomingFrame.StreamId, out var stream))
             {
-                stream.Abort(new ConnectionAbortedException("The request stream was reset by the client."));
+                var abortReason = new ConnectionAbortedException($"The request stream was reset by the client with error code {_incomingFrame.RstStreamErrorCode}.");
+                stream.Abort(abortReason);
             }
 
             return Task.CompletedTask;
