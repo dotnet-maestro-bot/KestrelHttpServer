@@ -452,38 +452,13 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
                     methodLength = i;
                     break;
                 }
-                else if (!IsValidTokenChar((char)ch))
+                else if (!HttpCharacters.IsToken(ch))
                 {
                     RejectRequestLine(data, length);
                 }
             }
 
             return new Span<byte>(data, methodLength);
-        }
-
-        private static bool IsValidTokenChar(char c)
-        {
-            // Determines if a character is valid as a 'token' as defined in the
-            // HTTP spec: https://tools.ietf.org/html/rfc7230#section-3.2.6
-            return
-                (c >= '0' && c <= '9') ||
-                (c >= 'A' && c <= 'Z') ||
-                (c >= 'a' && c <= 'z') ||
-                c == '!' ||
-                c == '#' ||
-                c == '$' ||
-                c == '%' ||
-                c == '&' ||
-                c == '\'' ||
-                c == '*' ||
-                c == '+' ||
-                c == '-' ||
-                c == '.' ||
-                c == '^' ||
-                c == '_' ||
-                c == '`' ||
-                c == '|' ||
-                c == '~';
         }
 
         [StackTraceHidden]

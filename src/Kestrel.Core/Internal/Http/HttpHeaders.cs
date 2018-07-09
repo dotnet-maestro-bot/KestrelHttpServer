@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure;
 using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
@@ -241,23 +242,37 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
             return TryGetValueFast(key, out value);
         }
 
-        public static void ValidateHeaderCharacters(in StringValues headerValues)
+        public static void ValidateHeaderValueCharacters(in StringValues headerValues)
         {
             var count = headerValues.Count;
             for (var i = 0; i < count; i++)
 
             {
-                ValidateHeaderCharacters(headerValues[i]);
+                ValidateHeaderValueCharacters(headerValues[i]);
             }
         }
 
-        public static void ValidateHeaderCharacters(string headerCharacters)
+        public static void ValidateHeaderValueCharacters(string headerCharacters)
         {
             if (headerCharacters != null)
             {
                 foreach (var ch in headerCharacters)
                 {
-                    if (ch < 0x20 || ch > 0x7E)
+                    if (!HttpCharacters.IsFieldValue(ch))
+                    {
+                        ThrowInvalidHeaderCharacter(ch);
+                    }
+                }
+            }
+        }
+
+        public static void ValidateHeaderNameCharacters(string headerCharacters)
+        {
+            if (headerCharacters != null)
+            {
+                foreach (var ch in headerCharacters)
+                {
+                    if (!HttpCharacters.IsToken(ch))
                     {
                         ThrowInvalidHeaderCharacter(ch);
                     }

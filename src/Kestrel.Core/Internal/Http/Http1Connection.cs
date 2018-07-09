@@ -277,7 +277,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
             for (var i = 0; i < target.Length; i++)
             {
                 var ch = target[i];
-                if (!UriUtilities.IsValidAuthorityCharacter(ch))
+                if (!HttpCharacters.IsAuthority(ch))
                 {
                     ThrowRequestTargetRejected(target);
                 }
