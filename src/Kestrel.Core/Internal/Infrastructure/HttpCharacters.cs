@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-
 using System;
 
 namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure
@@ -98,21 +97,9 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure
             => Token[c];
 
         public static bool IsToken(char c)
-        {
-            if (c > 0x7f)
-            {
-                return false;
-            }
-            return Token[(byte)c];
-        }
+            => c <= 0x7f && Token[c];
 
         public static bool IsFieldValue(char c)
-        {
-            if (c > 0x7f)
-            {
-                return false;
-            }
-            return FieldValue[(byte)c];
-        }
+            => c <= 0x7f && FieldValue[c];
     }
 }
