@@ -79,6 +79,23 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Tests
         [InlineData("Server", "Dašta")]
         [InlineData("Unknownš-Header", "Data")]
         [InlineData("Seršver", "Data")]
+        [InlineData("Server\"", "Data")]
+        [InlineData("Server(", "Data")]
+        [InlineData("Server)", "Data")]
+        [InlineData("Server,", "Data")]
+        [InlineData("Server/", "Data")]
+        [InlineData("Server:", "Data")]
+        [InlineData("Server;", "Data")]
+        [InlineData("Server<", "Data")]
+        [InlineData("Server=", "Data")]
+        [InlineData("Server>", "Data")]
+        [InlineData("Server?", "Data")]
+        [InlineData("Server@", "Data")]
+        [InlineData("Server[", "Data")]
+        [InlineData("Server\\", "Data")]
+        [InlineData("Server]", "Data")]
+        [InlineData("Server{", "Data")]
+        [InlineData("Server}", "Data")]
         public void AddingControlOrNonAsciiCharactersToHeadersThrows(string key, string value)
         {
             var responseHeaders = new HttpResponseHeaders();
