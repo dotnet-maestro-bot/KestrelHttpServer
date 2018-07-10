@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure
 {
-    public static class HttpCharacters
+    internal static class HttpCharacters
     {
         public static readonly int TableSize = 128;
         public static readonly bool[] AlphaNumeric;
